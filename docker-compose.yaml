@@ -1,0 +1,27 @@
+﻿volumes:
+  users.db:
+
+services:
+  users.webapi:
+    image: mikeswallet.users
+    container_name: users.webapi
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8888"
+    build:
+      context: .
+      dockerfile: MikesWallet.Users/Dockerfile
+    restart: no
+    ports:
+      - "8888:8888"
+    
+  users.database:
+    image: postgres:16-bullseye
+    container_name: users.database
+    environment:
+      - POSTGRES_DB=UsersServiceDb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345678
+    restart: no
+    volumes:
+      - users.db:/var/lib/postgresql/data
