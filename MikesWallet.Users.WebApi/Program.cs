@@ -1,8 +1,8 @@
 using System.Reflection;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using MikesWallet.Users.DAL;
-using MikesWallet.Users.Infrastructure;
+using MikesWallet.Users.WebApi.DAL;
+using MikesWallet.Users.WebApi.Infrastructure;
 using Scalar.AspNetCore;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 

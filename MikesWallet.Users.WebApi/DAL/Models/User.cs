@@ -1,4 +1,4 @@
-﻿namespace MikesWallet.Users.DAL.Models;
+﻿namespace MikesWallet.Users.WebApi.DAL.Models;
 
 public class User
 {

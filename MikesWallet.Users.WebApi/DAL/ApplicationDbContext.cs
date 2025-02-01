@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MikesWallet.Users.DAL.Models;
+using MikesWallet.Users.WebApi.DAL.Models;
 
-namespace MikesWallet.Users.DAL;
+namespace MikesWallet.Users.WebApi.DAL;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {

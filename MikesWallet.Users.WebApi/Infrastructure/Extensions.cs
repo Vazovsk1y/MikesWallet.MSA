@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using MikesWallet.Users.DAL;
-using MikesWallet.Users.DAL.Models;
-using MikesWallet.Users.Requests;
+using MikesWallet.Users.WebApi.DAL;
+using MikesWallet.Users.WebApi.DAL.Models;
+using MikesWallet.Users.WebApi.Requests;
 
-namespace MikesWallet.Users.Infrastructure;
+namespace MikesWallet.Users.WebApi.Infrastructure;
 
 public static class Extensions
 {

@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace MikesWallet.Users.Requests;
+namespace MikesWallet.Users.WebApi.Requests;
 
 public record SignUpRequest(string Email, string Password);
 

@@ -1,4 +1,4 @@
-﻿namespace MikesWallet.Users.Infrastructure;
+﻿namespace MikesWallet.Users.WebApi.Infrastructure;
 
 public record AccessTokenSettings
 {

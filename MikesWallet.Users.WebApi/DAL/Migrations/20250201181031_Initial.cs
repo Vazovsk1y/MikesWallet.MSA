@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MikesWallet.Users.DAL.Migrations
+namespace MikesWallet.Users.WebApi.DAL.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
