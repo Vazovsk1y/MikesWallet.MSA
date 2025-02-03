@@ -1,12 +1,16 @@
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using MikesWallet.Accounts.WebApi.DAL;
+using MikesWallet.Accounts.WebApi.DAL.Models;
 using MikesWallet.Accounts.WebApi.Infrastructure;
+using MikesWallet.Contracts.Cache;
 using Scalar.AspNetCore;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
@@ -26,6 +30,12 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddStackExchangeRedisCache(o =>
+{
+    o.Configuration = builder.Configuration.GetConnectionString("Redis");
+    o.InstanceName = "MikesWallet_";
+});
 
 builder.Services.AddAuthentication(e =>
     {
@@ -60,6 +70,18 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.Migrate();
+}
+
+var cache = app.Services.GetRequiredService<IDistributedCache>();
+var currenciesString = await cache.GetStringAsync("Currencies");
+if (string.IsNullOrWhiteSpace(currenciesString))
+{
+    var cacheEntry = Enum
+        .GetValues<Currency>()
+        .Select(e => new CurrencyCacheModel{ AlphabeticCode = e.ToString() })
+        .ToList();
+    
+    await cache.SetStringAsync("Currencies", JsonSerializer.Serialize(cacheEntry));
 }
 
 app.UseAuthentication();
