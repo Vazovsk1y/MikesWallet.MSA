@@ -1,5 +1,6 @@
 ﻿volumes:
   users.db:
+  accounts.db:
 
 services:
   users.webapi:
@@ -10,7 +11,7 @@ services:
       ASPNETCORE_HTTP_PORTS: "8888"
     build:
       context: .
-      dockerfile: MikesWallet.Users/Dockerfile
+      dockerfile: MikesWallet.Users.WebApi/Dockerfile
     restart: no
     ports:
       - "8888:8888"
@@ -25,3 +26,27 @@ services:
     restart: no
     volumes:
       - users.db:/var/lib/postgresql/data
+  
+  accounts.webapi:
+    image: mikeswallet.accounts
+    container_name: accounts.webapi
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "9999"
+    build:
+      context: .
+      dockerfile: MikesWallet.Accounts.WebApi/Dockerfile
+    restart: no
+    ports:
+      - "9999:9999"
+  
+  accounts.database:
+    image: postgres:16-bullseye
+    container_name: accounts.database
+    environment:
+      - POSTGRES_DB=AccountsServiceDb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345678
+    restart: no
+    volumes:
+      - accounts.db:/var/lib/postgresql/data
