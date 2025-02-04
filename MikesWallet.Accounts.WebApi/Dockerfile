@@ -7,6 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["MikesWallet.Accounts.WebApi/MikesWallet.Accounts.WebApi.csproj", "MikesWallet.Accounts.WebApi/"]
+COPY ["MikesWallet.Contracts/MikesWallet.Contracts.csproj", "MikesWallet.Contracts/"]
 RUN dotnet restore "MikesWallet.Accounts.WebApi/MikesWallet.Accounts.WebApi.csproj"
 COPY . .
 WORKDIR "/src/MikesWallet.Accounts.WebApi"
