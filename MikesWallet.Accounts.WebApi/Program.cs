@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -35,6 +36,22 @@ builder.Services.AddStackExchangeRedisCache(o =>
 {
     o.Configuration = builder.Configuration.GetConnectionString("Redis");
     o.InstanceName = "MikesWallet_";
+});
+
+builder.Services.AddMassTransit(e =>
+{
+    e.SetKebabCaseEndpointNameFormatter();
+
+    e.UsingRabbitMq((ctx, c) =>
+    {
+        c.Host(builder.Configuration.GetConnectionString("RabbitMq")!, h =>
+        {
+            h.Username("admin");
+            h.Password("admin");
+        });
+        
+        c.ConfigureEndpoints(ctx);
+    });
 });
 
 builder.Services.AddAuthentication(e =>

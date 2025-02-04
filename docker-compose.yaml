@@ -2,6 +2,7 @@
   users.db:
   accounts.db:
   cache:
+  broker-data:
 
 services:
   users.webapi:
@@ -80,3 +81,26 @@ services:
     build:
       context: .
       dockerfile: MikesWallet.ExchangeRates.WebApi/Dockerfile
+  
+  message-broker:
+    image: rabbitmq:4-management
+    container_name: message-broker
+    restart: no
+    volumes:
+      - broker-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  
+  email-notifications.worker:
+    image: mikeswallet.email-notifications
+    container_name: email-notifications
+    build:
+      context: .
+      dockerfile: MikesWallet.EmailNotifications.Worker/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+    restart: no

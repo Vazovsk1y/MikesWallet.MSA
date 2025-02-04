@@ -1,19 +1,25 @@
 ﻿using System.Data;
 using System.Text.Json;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.IdentityModel.JsonWebTokens;
 using MikesWallet.Accounts.WebApi.DAL;
 using MikesWallet.Accounts.WebApi.DAL.Models;
 using MikesWallet.Accounts.WebApi.Infrastructure;
 using MikesWallet.Accounts.WebApi.Requests;
 using MikesWallet.Contracts.Cache;
+using MikesWallet.Contracts.Events;
 
 namespace MikesWallet.Accounts.WebApi.Controllers;
 
 [Authorize]
-public class AccountsController(ApplicationDbContext dbContext, TimeProvider timeProvider) : BaseController
+public class AccountsController(
+    ApplicationDbContext dbContext, 
+    TimeProvider timeProvider,
+    IPublishEndpoint publishEndpoint) : BaseController
 {
     [HttpPost]
     public async Task<IActionResult> CreateAccount(
@@ -110,8 +116,15 @@ public class AccountsController(ApplicationDbContext dbContext, TimeProvider tim
             
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync();
-            
-            // TODO: Push message to broker.
+
+            await publishEndpoint.Publish(new DepositCompletedEvent()
+            {
+                UserEmail = HttpContext.User.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value,
+                AccountCurrency = account.Currency.ToString(),
+                AccountName = account.Name,
+                Amount = request.Amount,
+                Date = operation.CreationDateTime,
+            });
             
             return Ok(operation.Id);
         }
@@ -159,8 +172,15 @@ public class AccountsController(ApplicationDbContext dbContext, TimeProvider tim
             
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync();
-            
-            // TODO: Push message to broker.
+
+            await publishEndpoint.Publish(new WithdrawalCompletedEvent()
+            {
+                UserEmail = HttpContext.User.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value,
+                AccountCurrency = account.Currency.ToString(),
+                AccountName = account.Name,
+                Amount = request.Amount,
+                Date = operation.CreationDateTime,
+            });
             
             return Ok(operation.Id);
         }
@@ -255,8 +275,20 @@ public class AccountsController(ApplicationDbContext dbContext, TimeProvider tim
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync();
+
+            await publishEndpoint.Publish(new TransferCompletedEvent()
+            {
+                UserEmail = HttpContext.User.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value,
+                AccountFromCurrency = fromAccount.Currency.ToString(),
+                AccountToCurrency = toAccount.Currency.ToString(),
+                AccountFromName = fromAccount.Name,
+                AccountToName = toAccount.Name,
+                Amount = sub.Amount,
+                IsIncome = sub.Income,
+                Date = sub.CreationDateTime,
+            });
             
-            // TODO: Push message to broker.
+            // To send second message I need to store user email with account entity.
         }
         catch
         {
