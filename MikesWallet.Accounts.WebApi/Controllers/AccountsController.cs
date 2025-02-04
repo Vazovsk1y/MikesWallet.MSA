@@ -1,11 +1,14 @@
 ﻿using System.Data;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using MikesWallet.Accounts.WebApi.DAL;
 using MikesWallet.Accounts.WebApi.DAL.Models;
 using MikesWallet.Accounts.WebApi.Infrastructure;
 using MikesWallet.Accounts.WebApi.Requests;
+using MikesWallet.Contracts.Cache;
 
 namespace MikesWallet.Accounts.WebApi.Controllers;
 
@@ -173,6 +176,7 @@ public class AccountsController(ApplicationDbContext dbContext, TimeProvider tim
         Guid accountFromId, 
         Guid accountToId, 
         AccountTransferRequest request,
+        IDistributedCache cache,
         CancellationToken cancellationToken)
     {
 
@@ -195,8 +199,27 @@ public class AccountsController(ApplicationDbContext dbContext, TimeProvider tim
             }
             
             var toAccount = await dbContext.Accounts.FirstAsync(e => e.Id == accountToId, cancellationToken);
-            var exchangeRate = fromAccount.Currency == toAccount.Currency ? 1 : 1; // TODO: Get exchange rate from distributed cache.
 
+            decimal exchangeRate = 1;
+            if (fromAccount.Currency != toAccount.Currency)
+            {
+                var exchangeRatesStr = await cache.GetStringAsync("ExchangeRates", cancellationToken);
+                if (string.IsNullOrWhiteSpace(exchangeRatesStr))
+                {
+                    return BadRequest("Обменные курсы не найдены в кеше.");
+                }
+
+                var rates = JsonSerializer.Deserialize<List<ExchangeRateCacheModel>>(exchangeRatesStr);
+                var rate = rates!.FirstOrDefault(e => e.FromCurrencyCode == fromAccount.Currency.ToString() && 
+                                                      e.ToCurrencyCode == toAccount.Currency.ToString());
+                if (rate is null)
+                {
+                    return BadRequest("Обменный курс не найден.");
+                }
+                
+                exchangeRate = rate.Rate;
+            }
+            
             var currentDateTime = timeProvider.GetUtcNow();
             
             var sub = new Transfer

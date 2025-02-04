@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using MikesWallet.Contracts.Cache;
 
 namespace MikesWallet.ExchangeRates.WebApi;
 
@@ -20,7 +21,12 @@ public class ExchangeRatesUpdateWorker(
             
             var result = await provider.GetExchangeRatesAsync(stoppingToken);
             
-            await cache.SetStringAsync("ExchangeRates", JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+            await cache.SetStringAsync("ExchangeRates", JsonSerializer.Serialize(result.Select(e => new ExchangeRateCacheModel
+            {
+                FromCurrencyCode = e.FromCurrencyCode,
+                ToCurrencyCode = e.ToCurrencyCode,
+                Rate = e.Rate,
+            })), new DistributedCacheEntryOptions()
             {
                 AbsoluteExpirationRelativeToNow = Interval,
             }, stoppingToken);
